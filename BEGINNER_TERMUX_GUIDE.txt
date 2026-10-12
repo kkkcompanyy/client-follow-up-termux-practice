@@ -1,0 +1,92 @@
+CLIENT FOLLOW-UP PRACTICE — BEGINNER TERMUX + GITHUB GUIDE
+=======================================================
+
+This repository is a SANITIZED PRACTICE COPY.
+Never replace it with the real clients.db or real passwords.
+
+1) INSTALL TERMUX TOOLS
+
+    pkg update -y
+    pkg upgrade -y
+    pkg install -y python git curl wget nano unzip gh proot-distro
+    pip install -r requirements.txt
+
+2) RUN THE APP
+
+    python app.py
+
+Browser:
+
+    http://127.0.0.1:5000
+
+Practice login:
+
+    student
+    practice123
+
+3) TEST THE API
+
+Open a second Termux session:
+
+    curl http://127.0.0.1:5000/api/health
+
+4) UBUNTU WITH PROOT-DISTRO
+
+    proot-distro install ubuntu:24.04
+    proot-distro login ubuntu
+
+Inside Ubuntu:
+
+    apt update
+    apt install -y curl wget ca-certificates gnupg
+
+5) NGROK INSIDE UBUNTU
+
+Official APT install pattern:
+
+    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+      | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+    echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
+      | tee /etc/apt/sources.list.d/ngrok.list
+
+    apt update
+    apt install -y ngrok
+
+Then add YOUR OWN account token:
+
+    ngrok config add-authtoken "<YOUR_AUTHTOKEN>"
+
+With Flask running in another Termux session:
+
+    ngrok http 5000
+
+6) CLOUDFLARED INSIDE UBUNTU
+
+    mkdir -p --mode=0755 /usr/share/keyrings
+
+    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg \
+      | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
+      | tee /etc/apt/sources.list.d/cloudflared.list
+
+    apt-get update
+    apt-get install -y cloudflared
+
+Quick tunnel:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+7) GIT BASICS
+
+    git status
+    git log --oneline
+    git switch -c practice-change
+    git add .
+    git commit -m "Practice change"
+    git push -u origin practice-change
+
+Remember:
+Use this educational copy to experiment.
+Keep real client data and real secrets OUT of GitHub.

@@ -1,0 +1,102 @@
+HOW TO UPLOAD THIS PRACTICE PROJECT TO YOUR GITHUB FROM TERMUX
+================================================================
+
+Recommended beginner method: GitHub CLI (`gh`).
+
+STEP 1 — Install Git and GitHub CLI
+
+    pkg update -y
+    pkg install -y git gh unzip
+
+STEP 2 — Put this project in your Termux home
+
+If you downloaded the ZIP:
+
+    cd ~
+    unzip /sdcard/Download/client-follow-up-termux-practice.zip
+
+Then:
+
+    cd ~/client-follow-up-termux-practice
+
+STEP 3 — Login to GitHub
+
+    gh auth login
+
+Choose:
+
+    GitHub.com
+    HTTPS
+    Login with a web browser
+
+GitHub will show a one-time code.
+Follow the browser instructions.
+
+STEP 4 — Configure your Git identity
+
+Replace the example values with your own:
+
+    git config --global user.name "Your Name"
+    git config --global user.email "YOUR_GITHUB_EMAIL"
+
+STEP 5 — Initialize Git
+
+    cd ~/client-follow-up-termux-practice
+    git init
+    git branch -M main
+
+STEP 6 — CHECK WHAT WILL BE UPLOADED
+
+    git status
+
+IMPORTANT:
+You should NOT see:
+
+    clients.db
+    .env
+    certificates
+    keystores
+    tokens
+
+The included .gitignore is designed to block them.
+
+STEP 7 — First commit
+
+    git add .
+    git status
+    git commit -m "Initial Termux practice project"
+
+STEP 8 — Create the GitHub repository and push it
+
+Recommended safe first step: create it PRIVATE.
+
+    gh repo create client-follow-up-termux-practice \
+      --private \
+      --source=. \
+      --remote=origin \
+      --push
+
+When you are happy that there is no private data, you can make it public later
+from GitHub repository Settings.
+
+STEP 9 — Your nephew can clone it
+
+After you give him access (or after making it public):
+
+    pkg update -y
+    pkg install -y git python
+    git clone https://github.com/YOUR_USERNAME/client-follow-up-termux-practice.git
+    cd client-follow-up-termux-practice
+    pip install -r requirements.txt
+    python app.py
+
+STEP 10 — Normal future updates
+
+After editing:
+
+    git status
+    git add .
+    git commit -m "Describe what changed"
+    git push
+
+That is the basic Git/GitHub workflow.

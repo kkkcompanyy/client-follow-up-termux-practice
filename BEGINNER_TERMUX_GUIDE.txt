@@ -1,92 +1,1439 @@
-CLIENT FOLLOW-UP PRACTICE — BEGINNER TERMUX + GITHUB GUIDE
-=======================================================
+CLIENT FOLLOW-UP — BEGINNER FULL DISASTER-RECOVERY MANUAL
+========================================================
 
-This repository is a SANITIZED PRACTICE COPY.
-Never replace it with the real clients.db or real passwords.
+Last verified: 2026-10-11
 
-1) INSTALL TERMUX TOOLS
+PURPOSE
+-------
+This manual is written for the situation where:
+
+- You have a new/fresh Termux installation.
+- You remember almost nothing about the setup.
+- Your current app stopped working, or you changed phones.
+- You still have this backup folder:
+
+    /sdcard/Download/NEW APP BACKUPP
+
+- You want to rebuild the Client Follow-Up website from zero.
+- You want to run it locally.
+- You want to expose it to the internet with ngrok OR Cloudflare Tunnel.
+- You want to know exactly WHICH terminal/session to use for each command.
+
+This guide is intentionally beginner-friendly and repetitive.
+
+IMPORTANT SECURITY NOTE
+-----------------------
+Do NOT write passwords, Flask secret keys, ngrok authtokens, Cloudflare tunnel tokens,
+or other private credentials into this README.
+
+If a command below shows:
+
+    <YOUR_AUTHTOKEN>
+
+or:
+
+    <YOUR_TUNNEL_TOKEN>
+
+replace it only in your terminal when needed.
+
+Do not paste your real token into public chats or public GitHub repositories.
+
+============================================================
+PART 0 — UNDERSTAND THE SETUP BEFORE TOUCHING ANYTHING
+============================================================
+
+Your setup has THREE separate pieces:
+
+1) THE FLASK WEBSITE
+   Runs in NORMAL TERMUX.
+   Example command:
+
+       cd ~/checker-lab
+       python app.py
+
+   It listens on:
+
+       http://127.0.0.1:5000
+
+2) THE DATABASE
+   File:
+
+       ~/checker-lab/clients.db
+
+   This is where your real client information is stored.
+
+3) THE PUBLIC TUNNEL
+   This makes your local Flask website reachable from the internet.
+
+   You can use ONE of these:
+
+       ngrok
+
+   OR:
+
+       cloudflared
+
+   You do NOT need both running at the same time.
+
+In the setup we used, ngrok runs inside an Ubuntu environment installed inside Termux.
+For simplicity, this manual also recommends installing cloudflared inside that same Ubuntu environment.
+
+============================================================
+PART 1 — WHICH PROJECT FILES ARE REALLY IMPORTANT?
+============================================================
+
+Your main live project folder is:
+
+    ~/checker-lab
+
+The full backup folder is:
+
+    /sdcard/Download/NEW APP BACKUPP
+
+IMPORTANT FILES:
+
+A) ONE Python app version
+
+You can run any ONE of these:
+
+    app.py
+    app_pro_theme.py
+    cobra_finalwork.py
+    cobra_astra.py            <-- example future version
+
+Only one of them needs to run at a time.
+
+B) Database
+
+    clients.db
+
+This contains the real client data.
+
+C) Important JavaScript
+
+    static/no_refresh.js
+
+This is part of the working Quick Action/no-refresh behavior.
+Do NOT recreate this file from memory.
+
+D) Cobra image
+
+The cobra versions use:
+
+    static/cobra-reference.png
+
+The working cobra versions directly reference:
+
+    /static/cobra-reference.png
+
+If this image is missing, the Python app may still start,
+but the cobra design/background will be broken or incomplete.
+
+E) Other static files
+
+Keep the entire:
+
+    static/
+
+folder.
+
+BEST PRACTICE:
+Do not try to save only the minimum.
+Keep the ENTIRE NEW APP BACKUPP folder.
+
+============================================================
+PART 2 — INSTALL TERMUX CORRECTLY
+============================================================
+
+Recommended sources for Termux:
+
+- F-Droid
+- Official Termux GitHub releases
+
+The official PRoot-Distro project recommends installing Termux from F-Droid
+or Termux GitHub releases.
+
+After Termux is installed, open it.
+
+You will see a black terminal screen.
+
+Everything in PARTS 3 through 9 is done in NORMAL TERMUX unless the guide
+explicitly says:
+
+    INSIDE UBUNTU
+
+============================================================
+PART 3 — FIRST TERMUX SETUP
+============================================================
+
+STEP 1 — Give Termux storage access
+
+In NORMAL TERMUX run:
+
+    termux-setup-storage
+
+Android may ask for permission.
+
+Tap:
+
+    Allow
+
+If Termux says ~/storage already exists, that is normally okay.
+
+Check that Downloads is visible:
+
+    ls /sdcard/Download
+
+You should be able to see:
+
+    NEW APP BACKUPP
+
+If you do not see it, stop here and fix storage permission first.
+
+------------------------------------------------------------
+STEP 2 — Update Termux packages
+------------------------------------------------------------
+
+Run:
 
     pkg update -y
+
+Then:
+
     pkg upgrade -y
-    pkg install -y python git curl wget nano unzip gh proot-distro
-    pip install -r requirements.txt
 
-2) RUN THE APP
+This can take a few minutes.
 
+------------------------------------------------------------
+STEP 3 — Install the basic tools
+------------------------------------------------------------
+
+Run this in NORMAL TERMUX:
+
+    pkg install -y python git curl wget nano unzip tar proot-distro sqlite lsof
+
+What these are for:
+
+    python         = runs the Flask app
+    git            = useful for source/code work
+    curl           = tests the local API and downloads files
+    wget           = downloads files
+    nano           = simple text editor
+    unzip          = extracts ZIP files
+    tar            = extracts .tar.gz files
+    proot-distro   = installs/runs Ubuntu inside Termux
+    sqlite         = optional database inspection tool
+    lsof           = helps find which process is using port 5000
+
+Check Python:
+
+    python --version
+
+Check pip:
+
+    pip --version
+
+------------------------------------------------------------
+STEP 4 — Install Flask
+------------------------------------------------------------
+
+Run:
+
+    pip install flask
+
+When finished, check:
+
+    python -c "import flask; print(flask.__version__)"
+
+If it prints a Flask version, Flask is installed.
+
+============================================================
+PART 4 — RESTORE THE WEBSITE FROM NEW APP BACKUPP
+============================================================
+
+Everything here is in NORMAL TERMUX.
+
+STEP 1 — Make the project folder:
+
+    mkdir -p ~/checker-lab
+
+STEP 2 — Copy the ENTIRE backup into it:
+
+    cp -r "/sdcard/Download/NEW APP BACKUPP/." ~/checker-lab/
+
+STEP 3 — Enter the project:
+
+    cd ~/checker-lab
+
+STEP 4 — See what was restored:
+
+    ls -lah
+
+You should see things such as:
+
+    app.py
+    app_pro_theme.py
+    cobra_finalwork.py
+    clients.db
+    static/
+
+Check the static folder:
+
+    ls -lah ~/checker-lab/static
+
+You should see at least:
+
+    no_refresh.js
+
+and for cobra designs:
+
+    cobra-reference.png
+
+------------------------------------------------------------
+VERY IMPORTANT DATABASE CHECK
+------------------------------------------------------------
+
+Run:
+
+    ls -lh ~/checker-lab/clients.db
+
+If the database file has a normal file size and exists, good.
+
+Do NOT run experiments against your only copy of clients.db.
+
+Before dangerous changes, make another database copy:
+
+    cp ~/checker-lab/clients.db "/sdcard/Download/clients_before_change.db"
+
+============================================================
+PART 5 — CHECK THE PYTHON FILE BEFORE RUNNING
+============================================================
+
+In NORMAL TERMUX:
+
+    cd ~/checker-lab
+
+Check the original:
+
+    python -m py_compile app.py
+
+If NO error appears, syntax is okay.
+
+Check the first cobra version:
+
+    python -m py_compile app_pro_theme.py
+
+Check cobra_finalwork:
+
+    python -m py_compile cobra_finalwork.py
+
+For a future version:
+
+    python -m py_compile cobra_astra.py
+
+NO OUTPUT usually means the syntax check passed.
+
+============================================================
+PART 6 — START THE WEBSITE LOCALLY
+============================================================
+
+IMPORTANT:
+Only ONE Flask visual version should normally own port 5000 at a time.
+
+------------------------------------------------------------
+RUN ORIGINAL
+------------------------------------------------------------
+
+In NORMAL TERMUX:
+
+    cd ~/checker-lab
     python app.py
 
-Browser:
+Leave this terminal running.
+
+------------------------------------------------------------
+RUN FIRST COBRA VERSION
+------------------------------------------------------------
+
+First stop the currently running Flask server:
+
+    CTRL + C
+
+Then:
+
+    cd ~/checker-lab
+    python app_pro_theme.py
+
+If you renamed it to cobra.py:
+
+    python cobra.py
+
+------------------------------------------------------------
+RUN COBRA FINALWORK
+------------------------------------------------------------
+
+Stop the previous Flask server:
+
+    CTRL + C
+
+Then:
+
+    cd ~/checker-lab
+    python cobra_finalwork.py
+
+------------------------------------------------------------
+RUN FUTURE VERSION
+------------------------------------------------------------
+
+Example:
+
+    cd ~/checker-lab
+    python cobra_astra.py
+
+------------------------------------------------------------
+WHAT YOU SHOULD SEE
+------------------------------------------------------------
+
+The Flask output should indicate it is listening on:
 
     http://127.0.0.1:5000
 
-Practice login:
+Open your Android browser and visit:
 
-    student
-    practice123
+    http://127.0.0.1:5000
 
-3) TEST THE API
+If the login page appears, Flask is working.
 
-Open a second Termux session:
+============================================================
+PART 7 — TEST THE API BEFORE STARTING A TUNNEL
+============================================================
+
+You need a SECOND Termux session because the first session is busy running Flask.
+
+BEGINNER TIP:
+In Termux, open the side drawer/menu and create a NEW SESSION.
+Do not stop Flask in the first session.
+
+In the second NORMAL TERMUX session run:
 
     curl http://127.0.0.1:5000/api/health
 
-4) UBUNTU WITH PROOT-DISTRO
+You should receive JSON showing that the API is online and ok.
+
+If curl says:
+
+    Connection refused
+
+then Flask is NOT reachable.
+
+Go back to the Flask session and make sure:
+
+    python app.py
+
+or another version is still running.
+
+DO NOT troubleshoot ngrok or Cloudflare until this local curl works.
+
+============================================================
+PART 8 — INSTALL UBUNTU INSIDE TERMUX
+============================================================
+
+ngrok was previously run inside Ubuntu/proot.
+
+We will recreate that environment.
+
+All commands in this part start in NORMAL TERMUX.
+
+------------------------------------------------------------
+STEP 1 — Check proot-distro
+------------------------------------------------------------
+
+Run:
+
+    proot-distro --help
+
+If command not found:
+
+    pkg install -y proot-distro
+
+------------------------------------------------------------
+STEP 2 — Install Ubuntu
+------------------------------------------------------------
+
+Recommended known version:
 
     proot-distro install ubuntu:24.04
+
+This downloads and installs Ubuntu.
+
+It can take several minutes.
+
+If you already have Ubuntu installed, check:
+
+    proot-distro list
+
+------------------------------------------------------------
+STEP 3 — Enter Ubuntu
+------------------------------------------------------------
+
+Run:
+
     proot-distro login ubuntu
 
-Inside Ubuntu:
+Your prompt will change.
+
+You are now:
+
+    INSIDE UBUNTU
+
+IMPORTANT:
+By default, PRoot-Distro logs you into Ubuntu as root.
+
+That means most commands in this Ubuntu environment do NOT need sudo.
+
+To confirm:
+
+    whoami
+
+It will normally print:
+
+    root
+
+------------------------------------------------------------
+STEP 4 — Update Ubuntu
+------------------------------------------------------------
+
+INSIDE UBUNTU run:
 
     apt update
-    apt install -y curl wget ca-certificates gnupg
 
-5) NGROK INSIDE UBUNTU
+Then:
 
-Official APT install pattern:
+    apt upgrade -y
 
-    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-      | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+Install basic packages:
 
-    echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" \
-      | tee /etc/apt/sources.list.d/ngrok.list
+    apt install -y curl wget ca-certificates gnupg tar gzip unzip nano
+
+------------------------------------------------------------
+HOW TO LEAVE UBUNTU
+------------------------------------------------------------
+
+Run:
+
+    exit
+
+You return to NORMAL TERMUX.
+
+To enter Ubuntu again later:
+
+    proot-distro login ubuntu
+
+============================================================
+PART 9 — INSTALL NGROK INSIDE UBUNTU
+============================================================
+
+This section is:
+
+    INSIDE UBUNTU
+
+If you are not inside Ubuntu yet, from NORMAL TERMUX run:
+
+    proot-distro login ubuntu
+
+Check:
+
+    whoami
+
+Expected:
+
+    root
+
+------------------------------------------------------------
+STEP 1 — Add the official ngrok APT repository
+------------------------------------------------------------
+
+Run:
+
+    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+Then:
+
+    echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" | tee /etc/apt/sources.list.d/ngrok.list
+
+Then:
+
+    apt update
+
+Then:
+
+    apt install -y ngrok
+
+------------------------------------------------------------
+STEP 2 — Verify ngrok
+------------------------------------------------------------
+
+Run:
+
+    ngrok version
+
+You should see the installed ngrok version.
+
+------------------------------------------------------------
+STEP 3 — Add your ngrok account authtoken
+------------------------------------------------------------
+
+You need an ngrok account.
+
+Open the ngrok dashboard in your browser and find your Authtoken.
+
+DO NOT save the token in this README.
+
+INSIDE UBUNTU run:
+
+    ngrok config add-authtoken "<YOUR_AUTHTOKEN>"
+
+Replace only:
+
+    <YOUR_AUTHTOKEN>
+
+with your real token.
+
+After this, ngrok stores the authentication configuration for you.
+
+------------------------------------------------------------
+STEP 4 — Make sure Flask is running FIRST
+------------------------------------------------------------
+
+Remember:
+
+FLASK runs in NORMAL TERMUX.
+
+ngrok runs INSIDE UBUNTU.
+
+You therefore need two Termux sessions:
+
+SESSION 1 — NORMAL TERMUX:
+
+    cd ~/checker-lab
+    python app.py
+
+SESSION 2 — UBUNTU:
+
+    proot-distro login ubuntu
+
+Then ngrok runs in Session 2.
+
+Before starting ngrok, you can test from Ubuntu:
+
+    curl http://127.0.0.1:5000/api/health
+
+Because PRoot shares the Android network environment,
+this should reach the Flask process running in normal Termux.
+
+------------------------------------------------------------
+STEP 5 — Run your reserved/static ngrok URL
+------------------------------------------------------------
+
+INSIDE UBUNTU:
+
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
+
+Keep that terminal open.
+
+Your public URL is:
+
+    https://splatter-conch-theology.ngrok-free.dev
+
+Open it from another device/browser.
+
+------------------------------------------------------------
+STEP 6 — Temporary ngrok URL instead
+------------------------------------------------------------
+
+If you do not want to use the reserved URL:
+
+    ngrok http 5000
+
+ngrok will print a public HTTPS URL.
+
+This temporary URL may be different from your reserved URL.
+
+============================================================
+PART 10 — EVERYDAY NGROK STARTUP
+============================================================
+
+After ngrok and Ubuntu are already installed, you do NOT reinstall them every day.
+
+Use this order:
+
+SESSION 1 — NORMAL TERMUX
+
+    cd ~/checker-lab
+    python app.py
+
+OR:
+
+    python app_pro_theme.py
+
+OR:
+
+    python cobra_finalwork.py
+
+Then open SESSION 2 — NORMAL TERMUX and enter Ubuntu:
+
+    proot-distro login ubuntu
+
+Now INSIDE UBUNTU:
+
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
+
+That is the normal startup.
+
+============================================================
+PART 11 — INSTALL CLOUDFLARED INSIDE UBUNTU
+============================================================
+
+Cloudflare Tunnel is an ALTERNATIVE to ngrok.
+
+You do NOT need ngrok running when using cloudflared.
+
+This manual installs cloudflared inside the same Ubuntu environment
+to keep the setup easy to remember.
+
+Enter Ubuntu from NORMAL TERMUX:
+
+    proot-distro login ubuntu
+
+Everything below is:
+
+    INSIDE UBUNTU
+
+------------------------------------------------------------
+STEP 1 — Install Cloudflare package signing key
+------------------------------------------------------------
+
+Run:
+
+    mkdir -p --mode=0755 /usr/share/keyrings
+
+Then:
+
+    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+------------------------------------------------------------
+STEP 2 — Add Cloudflare APT repository
+------------------------------------------------------------
+
+Run:
+
+    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" | tee /etc/apt/sources.list.d/cloudflared.list
+
+Then:
+
+    apt-get update
+
+Then:
+
+    apt-get install -y cloudflared
+
+------------------------------------------------------------
+STEP 3 — Verify cloudflared
+------------------------------------------------------------
+
+Run:
+
+    cloudflared --version
+
+If it prints a version, installation worked.
+
+============================================================
+PART 12 — RUN A CLOUDFLARE QUICK TUNNEL
+============================================================
+
+A Quick Tunnel is the easiest Cloudflare method.
+
+IMPORTANT:
+- No Cloudflare account is required for a Quick Tunnel.
+- No domain is required.
+- The public URL is temporary.
+- It normally changes when you restart cloudflared.
+
+FIRST:
+Make sure Flask is running in NORMAL TERMUX:
+
+    cd ~/checker-lab
+    python app.py
+
+or the visual version you want.
+
+Test:
+
+    curl http://127.0.0.1:5000/api/health
+
+Now, in a SECOND Termux session:
+
+    proot-distro login ubuntu
+
+INSIDE UBUNTU run:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+cloudflared will print an address similar to:
+
+    https://something-random.trycloudflare.com
+
+Open that URL in a browser.
+
+Anyone who has that URL can reach the local web app while the tunnel is running.
+
+To stop cloudflared:
+
+    CTRL + C
+
+============================================================
+PART 13 — EVERYDAY CLOUDFLARE QUICK-TUNNEL STARTUP
+============================================================
+
+SESSION 1 — NORMAL TERMUX:
+
+    cd ~/checker-lab
+    python app.py
+
+or:
+
+    python app_pro_theme.py
+
+or:
+
+    python cobra_finalwork.py
+
+SESSION 2:
+
+    proot-distro login ubuntu
+
+Then INSIDE UBUNTU:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+Use the new trycloudflare.com URL cloudflared prints.
+
+============================================================
+PART 14 — OPTIONAL: PERMANENT CLOUDFLARE TUNNEL
+============================================================
+
+This is NOT required for the current app.
+
+Use this only if one day you want a fixed Cloudflare hostname/domain.
+
+For a normal named/permanent Cloudflare Tunnel, Cloudflare generally requires:
+
+- a Cloudflare account
+- a domain managed by Cloudflare
+- a tunnel configuration or token
+
+Cloudflare's current dashboard flow is:
+
+    Cloudflare Dashboard
+    -> Networking
+    -> Tunnels
+    -> Create Tunnel
+
+Cloudflare then provides a tunnel token or installation command.
+
+IMPORTANT FOR PROOT/ANDROID:
+Do NOT blindly follow Linux instructions that install cloudflared as a systemd service.
+
+A PRoot Ubuntu environment on Android does not behave like a normal always-on Ubuntu server.
+
+For this phone setup, manually running the tunnel process is simpler.
+
+If Cloudflare gives you a tunnel token, the manual-run pattern is generally:
+
+    cloudflared tunnel run --token "<YOUR_TUNNEL_TOKEN>"
+
+Do not save that token inside this README.
+
+============================================================
+PART 15 — NGROK VS CLOUDFLARED
+============================================================
+
+NGROK CURRENT SETUP
+-------------------
+
+Advantages:
+
+- You already have the reserved URL:
+
+      https://splatter-conch-theology.ngrok-free.dev
+
+- Same public URL can point to whichever Flask version is on port 5000.
+- Easy for the Android app/backend if it already uses this URL.
+
+Run:
+
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
+
+CLOUDFLARE QUICK TUNNEL
+-----------------------
+
+Advantages:
+
+- Simple.
+- No Cloudflare account needed.
+- Good backup method.
+
+Run:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+Disadvantage:
+
+- The trycloudflare.com URL is temporary and changes.
+
+RECOMMENDATION FOR THIS PROJECT:
+
+Use ngrok as the normal public method because your reserved URL already exists.
+
+Keep cloudflared as a backup/alternative.
+
+============================================================
+PART 16 — WHICH SESSION DOES WHAT?
+============================================================
+
+THIS IS IMPORTANT.
+
+SESSION 1 — NORMAL TERMUX
+-------------------------
+
+Purpose:
+
+    Run Flask.
+
+Example:
+
+    cd ~/checker-lab
+    python app.py
+
+LEAVE IT OPEN.
+
+SESSION 2 — UBUNTU INSIDE TERMUX
+--------------------------------
+
+First enter Ubuntu:
+
+    proot-distro login ubuntu
+
+Then run ONE tunnel:
+
+NGROK:
+
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
+
+OR CLOUDFLARED:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+LEAVE IT OPEN.
+
+DO NOT run both unless you intentionally want two public URLs.
+
+============================================================
+PART 17 — SWITCH BETWEEN WEBSITE VISUAL VERSIONS
+============================================================
+
+Suppose app.py is running.
+
+Go to the Flask session and press:
+
+    CTRL + C
+
+Then run another:
+
+    cd ~/checker-lab
+    python app_pro_theme.py
+
+or:
+
+    python cobra_finalwork.py
+
+or:
+
+    python cobra_astra.py
+
+If ngrok is still forwarding to port 5000, the SAME ngrok public URL will now
+show the new version.
+
+The database remains:
+
+    ~/checker-lab/clients.db
+
+So your client data stays the same.
+
+============================================================
+PART 18 — ANDROID APP RELATIONSHIP
+============================================================
+
+The Android app is a separate project.
+
+The website/backend uses:
+
+    clients.db
+
+The Android app communicates with the Flask REST API.
+
+That means:
+
+- Web marks a client Called.
+- Flask updates clients.db.
+- Android sync sees the updated data.
+- Another website theme also sees the same data.
+
+DO NOT change the API routes just because you are changing the website design.
+
+Important API routes include:
+
+    /api/health
+    /api/login
+    /api/clients
+    /api/stats
+    /api/sync
+    /api/clients/add
+    /api/clients/<id>/toggle
+    /api/clients/<id>/status
+    /api/clients/bulk
+    /api/clients/import
+
+============================================================
+PART 19 — PROTECTED WORKING WEBSITE BEHAVIOR
+============================================================
+
+Do not casually change:
+
+    static/no_refresh.js
+
+Important protected behavior:
+
+- Quick Action does not cause the old bad full-page refresh/jump.
+- Category remains selected.
+- Bulk actions keep category.
+- Called At timestamp works.
+- Mark Called sets a local timestamp.
+- Mark Not Called clears Called At.
+- Android API remains compatible.
+
+If a redesign breaks any of this, restore/compare against the working Python backup.
+
+============================================================
+PART 20 — COMMON PROBLEMS AND EXACT FIXES
+============================================================
+
+PROBLEM:
+    python: command not found
+
+FIX:
+
+    pkg install -y python
+
+
+PROBLEM:
+    ModuleNotFoundError: No module named 'flask'
+
+FIX:
+
+    pip install flask
+
+
+PROBLEM:
+    Port 5000 already in use
+
+CHECK:
+
+    lsof -i :5000
+
+Most likely another Flask version is still running.
+
+Go to its session and press:
+
+    CTRL + C
+
+Then start the version you want.
+
+
+PROBLEM:
+    curl http://127.0.0.1:5000/api/health
+    says Connection refused
+
+FIX:
+Flask is not running.
+
+Run in NORMAL TERMUX:
+
+    cd ~/checker-lab
+    python app.py
+
+
+PROBLEM:
+    ngrok opens but says upstream connection failed
+
+FIRST TEST:
+
+    curl http://127.0.0.1:5000/api/health
+
+Do this locally before blaming ngrok.
+
+
+PROBLEM:
+    cloudflared starts but public page fails
+
+FIRST TEST:
+
+    curl http://127.0.0.1:5000/api/health
+
+Then test INSIDE UBUNTU:
+
+    curl http://127.0.0.1:5000/api/health
+
+If Ubuntu cannot reach Flask, fix local connectivity before the tunnel.
+
+
+PROBLEM:
+    ngrok command not found INSIDE UBUNTU
+
+Run:
 
     apt update
     apt install -y ngrok
 
-Then add YOUR OWN account token:
+If the ngrok repository was never added, repeat PART 9.
+
+
+PROBLEM:
+    cloudflared command not found INSIDE UBUNTU
+
+Repeat PART 11.
+
+
+PROBLEM:
+    proot-distro command not found
+
+In NORMAL TERMUX:
+
+    pkg install -y proot-distro
+
+
+PROBLEM:
+    Ubuntu is not installed
+
+Check:
+
+    proot-distro list
+
+Install:
+
+    proot-distro install ubuntu:24.04
+
+
+PROBLEM:
+    Website starts but cobra background is missing
+
+Check:
+
+    ls -lh ~/checker-lab/static/cobra-reference.png
+
+The cobra versions reference:
+
+    /static/cobra-reference.png
+
+
+PROBLEM:
+    Website starts but real clients are gone
+
+STOP Flask first:
+
+    CTRL + C
+
+Check:
+
+    ls -lh ~/checker-lab/clients.db
+
+Restore from backup if needed:
+
+    cp "/sdcard/Download/NEW APP BACKUPP/clients.db" ~/checker-lab/clients.db
+
+Then run Flask again.
+
+
+PROBLEM:
+    Quick Action starts refreshing/jumping again
+
+Check:
+
+    ls -lh ~/checker-lab/static/no_refresh.js
+
+Do NOT invent a new no_refresh.js.
+
+Compare the Python version against the backup.
+
+============================================================
+PART 21 — BACK UP THE CURRENT LIVE PROJECT AGAIN
+============================================================
+
+Any time you get a version you really like:
+
+STOP Flask if you want a very clean database copy.
+
+Then in NORMAL TERMUX:
+
+    mkdir -p "/sdcard/Download/NEW APP BACKUPP"
+
+Copy the full project:
+
+    cp -r ~/checker-lab/. "/sdcard/Download/NEW APP BACKUPP/"
+
+Verify:
+
+    ls -lah "/sdcard/Download/NEW APP BACKUPP"
+
+Check total size:
+
+    du -sh "/sdcard/Download/NEW APP BACKUPP"
+
+List files:
+
+    find "/sdcard/Download/NEW APP BACKUPP" -maxdepth 2 -type f | sort
+
+============================================================
+PART 22 — ADD A NEW FUTURE VERSION TO THE BACKUP
+============================================================
+
+Example new file:
+
+    ~/checker-lab/cobra_astra.py
+
+Copy it into the backup:
+
+    cp ~/checker-lab/cobra_astra.py "/sdcard/Download/NEW APP BACKUPP/"
+
+Verify:
+
+    ls -lh "/sdcard/Download/NEW APP BACKUPP/cobra_astra.py"
+
+============================================================
+PART 23 — OPTIONAL PHONE STABILITY TIPS
+============================================================
+
+Long-running Flask/tunnel processes can stop if Android aggressively kills Termux.
+
+Helpful ideas:
+
+- Keep Termux open while testing.
+- Avoid swiping Termux away from recent apps.
+- Disable aggressive battery optimization for Termux if Android keeps killing it.
+- Keep the phone connected to stable power for long sessions.
+
+Termux also supports a wake lock command on many installations:
+
+    termux-wake-lock
+
+When finished:
+
+    termux-wake-unlock
+
+If these commands are unavailable, simply skip them.
+
+============================================================
+PART 24 — FULL REBUILD FROM ZERO: COMMAND-ONLY CHEAT SHEET
+============================================================
+
+This is the section to use if you forget almost everything.
+
+------------------------------
+A) NORMAL TERMUX — PREPARE
+------------------------------
+
+    termux-setup-storage
+
+    pkg update -y
+
+    pkg upgrade -y
+
+    pkg install -y python git curl wget nano unzip tar proot-distro sqlite lsof
+
+    pip install flask
+
+------------------------------
+B) NORMAL TERMUX — RESTORE APP
+------------------------------
+
+    mkdir -p ~/checker-lab
+
+    cp -r "/sdcard/Download/NEW APP BACKUPP/." ~/checker-lab/
+
+    cd ~/checker-lab
+
+    ls -lah
+
+    ls -lah static
+
+    python -m py_compile app.py
+
+------------------------------
+C) NORMAL TERMUX — RUN FLASK
+------------------------------
+
+    cd ~/checker-lab
+
+    python app.py
+
+Leave it running.
+
+------------------------------
+D) SECOND NORMAL TERMUX SESSION — TEST
+------------------------------
+
+    curl http://127.0.0.1:5000/api/health
+
+------------------------------
+E) NORMAL TERMUX — INSTALL UBUNTU
+------------------------------
+
+    pkg install -y proot-distro
+
+    proot-distro install ubuntu:24.04
+
+    proot-distro login ubuntu
+
+------------------------------
+F) INSIDE UBUNTU — PREPARE
+------------------------------
+
+    apt update
+
+    apt upgrade -y
+
+    apt install -y curl wget ca-certificates gnupg tar gzip unzip nano
+
+------------------------------
+G) INSIDE UBUNTU — INSTALL NGROK
+------------------------------
+
+    curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+    echo "deb https://ngrok-agent.s3.amazonaws.com bookworm main" | tee /etc/apt/sources.list.d/ngrok.list
+
+    apt update
+
+    apt install -y ngrok
+
+    ngrok version
 
     ngrok config add-authtoken "<YOUR_AUTHTOKEN>"
 
-With Flask running in another Termux session:
+------------------------------
+H) INSIDE UBUNTU — RUN NGROK
+------------------------------
 
-    ngrok http 5000
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
 
-6) CLOUDFLARED INSIDE UBUNTU
+Public URL:
+
+    https://splatter-conch-theology.ngrok-free.dev
+
+------------------------------
+I) INSIDE UBUNTU — INSTALL CLOUDFLARED
+------------------------------
 
     mkdir -p --mode=0755 /usr/share/keyrings
 
-    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg \
-      | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
 
-    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
-      | tee /etc/apt/sources.list.d/cloudflared.list
+    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" | tee /etc/apt/sources.list.d/cloudflared.list
 
     apt-get update
+
     apt-get install -y cloudflared
 
-Quick tunnel:
+    cloudflared --version
+
+------------------------------
+J) INSIDE UBUNTU — RUN CLOUDFLARE QUICK TUNNEL
+------------------------------
 
     cloudflared tunnel --url http://127.0.0.1:5000
 
-7) GIT BASICS
+Use the trycloudflare.com URL it prints.
 
-    git status
-    git log --oneline
-    git switch -c practice-change
-    git add .
-    git commit -m "Practice change"
-    git push -u origin practice-change
+============================================================
+PART 25 — WHAT NOT TO DELETE
+============================================================
 
-Remember:
-Use this educational copy to experiment.
-Keep real client data and real secrets OUT of GitHub.
+Never casually delete:
+
+    /sdcard/Download/NEW APP BACKUPP
+
+Inside the live app, protect:
+
+    ~/checker-lab/clients.db
+    ~/checker-lab/static/no_refresh.js
+    ~/checker-lab/static/cobra-reference.png
+    ~/checker-lab/app.py
+    ~/checker-lab/app_pro_theme.py
+    ~/checker-lab/cobra_finalwork.py
+
+Keep future good versions too.
+
+============================================================
+PART 26 — OFFICIAL SOURCES USED FOR THIS MANUAL
+============================================================
+
+These installation instructions were checked against current official sources
+on 2026-10-11.
+
+Termux PRoot-Distro:
+    https://github.com/termux/proot-distro
+
+ngrok Linux installation:
+    https://ngrok.com/download/linux
+
+ngrok ARM64 / Raspberry Pi Linux installation:
+    https://ngrok.com/download/raspberry-pi
+
+Cloudflare cloudflared downloads:
+    https://developers.cloudflare.com/tunnel/downloads/
+
+Cloudflare Quick Tunnels:
+    https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/
+
+Cloudflare locally-managed tunnel/install:
+    https://developers.cloudflare.com/tunnel/features/locally-managed-tunnels/create-local-tunnel/
+
+============================================================
+FINAL SIMPLE REMINDER
+============================================================
+
+To use the app normally after everything is installed:
+
+SESSION 1 — NORMAL TERMUX:
+
+    cd ~/checker-lab
+    python app.py
+
+SESSION 2 — NORMAL TERMUX:
+
+    proot-distro login ubuntu
+
+Then INSIDE UBUNTU choose ONE:
+
+NGROK:
+
+    ngrok http --url=splatter-conch-theology.ngrok-free.dev http://127.0.0.1:5000
+
+OR CLOUDFLARED:
+
+    cloudflared tunnel --url http://127.0.0.1:5000
+
+That is the basic full system.
+
+END OF BEGINNER FULL MANUAL
+===========================
